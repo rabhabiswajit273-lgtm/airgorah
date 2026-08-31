@@ -1,0 +1,115 @@
+import socket
+import time
+import requests
+from datetime import datetime
+
+def check_internet():
+    try:
+        socket.create_connection(("8.8.8.8", 53), timeout=3)
+        return True
+    except:
+        return False
+
+def ping_test(host="www.google.com", count=4):
+    print(f"\n--- Pinging {host} {count} times ---")
+    for i in range(count):
+        try:
+            start = time.time()
+            requests.get(f"https://{host}", timeout=5)
+            ms = int((time.time() - start) * 1000)
+            print(f"[{i+1}] {host}: {ms} ms")
+            time.sleep(1)
+        except Exception as e:
+            print(f"[{i+1}] Failed: {e}")
+
+def speed_test():
+    print("\n--- Speed Test ---")
+    try:
+        start = time.time()
+        r = requests.get("https://speed.cloudflare.com/__down?bytes=1000000", timeout=15)
+        mb = len(r.content) / (1024*1024)
+        elapsed = time.time() - start
+        speed_mbps = (mb * 8) / elapsed
+        print(f"Downloaded {mb:.2f} MB in {elapsed:.2f}s")
+        print(f"Speed: {speed_mbps:.2f} Mbps")
+    except Exception as e:
+        print("Speed test failed:", e)
+
+def port_checker():
+    host = input("Enter host (ex: google.com): ")
+    port = int(input("Enter port (ex: 80, 443, 8080): "))
+    print(f"Checking {host}:{port}...")
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(3)
+    result = sock.connect_ex((host, port))
+    if result == 0:
+        print(f"✅ Port {port} OPEN on {host}")
+    else:
+        print(f"❌ Port {port} CLOSED on {host}")
+    sock.close()
+
+def website_checker():
+    url = input("Enter website URL (ex: https://google.com): ")
+    if not url.startswith("http"):
+        url = "https://" + url
+    print(f"Checking {url}...")
+    try:
+        start = time.time()
+        r = requests.get(url, timeout=10)
+        elapsed = int((time.time() - start)*1000)
+        print(f"Status: {r.status_code} - {'UP' if r.status_code==200 else 'DOWN'}")
+        print(f"Response time: {elapsed} ms")
+        print(f"Server: {r.headers.get('Server', 'Unknown')}")
+    except Exception as e:
+        print(f"Website DOWN or Error: {e}")
+
+def ip_info():
+    print("\n--- IP Info ---")
+    try:
+        ip = requests.get("https://api.ipify.org", timeout=5).text
+        info = requests.get(f"https://ipapi.co/{ip}/json/", timeout=5).json()
+        print(f"Public IP: {ip}")
+        print(f"City: {info.get('city')}, {info.get('region')}")
+        print(f"ISP: {info.get('org')}")
+        print(f"Country: {info.get('country_name')}")
+    except Exception as e:
+        print("Error:", e)
+
+def continuous_monitor():
+    print("\n--- Continuous Monitor (Press Ctrl+C to stop) ---")
+    host = "www.google.com"
+    while True:
+        try:
+            start = time.time()
+            requests.get(f"https://{host}", timeout=5)
+            ms = int((time.time() - start)*1000)
+            now = datetime.now().strftime("%H:%M:%S")
+            print(f"[{now}] Ping {ms} ms - OK")
+            time.sleep(2)
+        except KeyboardInterrupt:
+            print("\nStopped.")
+            break
+        except Exception as e:
+            now = datetime.now().strftime("%H:%M:%S")
+            print(f"[{now}] FAILED - {e}")
+            time.sleep(2)
+
+# MENU
+while True:
+    print("\n====== ALL NETWORK TESTER ======")
+    print("1. Quick Test (Internet + Ping + Speed + IP)")
+    print("2. Ping Test (custom host)")
+    print("3. Website UP/DOWN Check")
+    print("4. Port Checker")
+    print("5. IP & Location Info")
+    print("6. Continuous Ping Monitor")
+    print("0. Exit")
+    
+    choice = input("Choose option: ")
+    
+    if not check_internet():
+        print("❌ No Internet! Connect first.")
+        continue
+        
+    if choice == "1":
+        print
